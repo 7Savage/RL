@@ -84,6 +84,12 @@ if __name__ == '__main__':
         return episode_rewards
 
 
+    episode_rewards = play_sarsa(env, agent, train=True, episode_nums=5000)
+    plt.plot(episode_rewards)
+    plt.title("Sarsa")
+    plt.show()
+    # np.savetxt("q.csv", agent.q, fmt="%.5e", delimiter=",")
+
     # 训练完毕，测试策略
 
     agent.epsilon = 0
