@@ -13,33 +13,28 @@ if __name__ == '__main__':
     print('速度范围 = {}'.format((-env.max_speed, env.max_speed)))
     print('目标位置 = {}'.format(env.goal_position))
 
+    """
+    测试总是向右
+    """
+    positions, velocities = [], []
+    observation = env.reset()
+    max_steps = 200
+    while max_steps:
+        max_steps -= 1
+        positions.append(observation[0])
+        velocities.append(observation[1])
 
-    def test():
-        """
-        测试总是向右
-        """
-        positions, velocities = [], []
-        observation = env.reset()
-        max_steps = 200
-        while max_steps:
-            max_steps -= 1
-            positions.append(observation[0])
-            velocities.append(observation[1])
+        next_observation, reward, done, _ = env.step(2)
+        if done:
+            break
+        observation = next_observation
+    if next_observation[0] > 0.5:
+        print("成功到达")
+    else:
+        print("失败退出")
 
-            next_observation, reward, done, _ = env.step(2)
-            if done:
-                break
-            observation = next_observation
-        if next_observation[0] > 0.5:
-            print("成功到达")
-        else:
-            print("失败退出")
-
-        fig, ax = plt.subplots()
-        ax.plot(positions, label="position")
-        ax.plot(velocities, label="velocity")
-        ax.legend()
-        fig.show()
-
-
-    test()
+    fig, ax = plt.subplots()
+    ax.plot(positions, label="position")
+    ax.plot(velocities, label="velocity")
+    ax.legend()
+    fig.show()

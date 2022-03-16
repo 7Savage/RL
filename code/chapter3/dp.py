@@ -3,15 +3,6 @@ import numpy as np
 np.random.seed(0)
 import gym
 
-if __name__ == '__main__':
-    env = gym.make('FrozenLake-v1')
-    env.seed(0)
-    print('观察空间 = {}'.format(env.observation_space))
-    print('动作空间 = {}'.format(env.action_space))
-    print('观测空间大小 = {}'.format(env.unwrapped.nS))
-    print('动作空间大小 = {}'.format(env.unwrapped.nA))
-    env.unwrapped.P[14][2]  # 查看动力
-
 
 def play_policy(env, policy, render=False):
     total_reward = 0.
@@ -26,13 +17,6 @@ def play_policy(env, policy, render=False):
         if done:  # 游戏结束
             break
     return total_reward
-
-
-random_policy = \
-    np.ones((env.unwrapped.nS, env.unwrapped.nA)) / env.unwrapped.nA
-
-episode_rewards = [play_policy(env, random_policy) for _ in range(100)]
-print("随机策略 平均奖励：{}".format(np.mean(episode_rewards)))
 
 
 def v2q(env, v, s=None, gamma=1.):  # 根据状态价值函数计算动作价值函数
@@ -62,15 +46,6 @@ def evaluate_policy(env, policy, gamma=1., tolerant=1e-6):
     return v
 
 
-print('状态价值函数：')
-v_random = evaluate_policy(env, random_policy)
-print(v_random.reshape(4, 4))
-
-print('动作价值函数：')
-q_random = v2q(env, v_random)
-print(q_random)
-
-
 def improve_policy(env, v, policy, gamma=1.):
     optimal = True
     for s in range(env.unwrapped.nS):
@@ -83,15 +58,6 @@ def improve_policy(env, v, policy, gamma=1.):
     return optimal
 
 
-policy = random_policy.copy()
-optimal = improve_policy(env, v_random, policy)
-if optimal:
-    print('无更新，最优策略为：')
-else:
-    print('有更新，更新后的策略为：')
-print(policy)
-
-
 def iterate_policy(env, gamma=1., tolerant=1e-6):
     # 初始化为任意一个策略
     policy = np.ones((env.unwrapped.nS, env.unwrapped.nA)) \
@@ -101,16 +67,6 @@ def iterate_policy(env, gamma=1., tolerant=1e-6):
         if improve_policy(env, v, policy):  # 策略改进
             break
     return policy, v
-
-
-policy_pi, v_pi = iterate_policy(env)
-print('状态价值函数 =')
-print(v_pi.reshape(4, 4))
-print('最优策略 =')
-print(np.argmax(policy_pi, axis=1).reshape(4, 4))
-
-episode_rewards = [play_policy(env, policy_pi) for _ in range(100)]
-print("策略迭代 平均奖励：{}".format(np.mean(episode_rewards)))
 
 
 def iterate_value(env, gamma=1, tolerant=1e-6):
@@ -131,11 +87,52 @@ def iterate_value(env, gamma=1, tolerant=1e-6):
     return policy, v
 
 
-policy_vi, v_vi = iterate_value(env)
-print('状态价值函数 =')
-print(v_vi.reshape(4, 4))
-print('最优策略 =')
-print(np.argmax(policy_vi, axis=1).reshape(4, 4))
+if __name__ == '__main__':
+    env = gym.make('FrozenLake-v1')
+    env.seed(0)
+    print('观察空间 = {}'.format(env.observation_space))
+    print('动作空间 = {}'.format(env.action_space))
+    print('观测空间大小 = {}'.format(env.unwrapped.nS))
+    print('动作空间大小 = {}'.format(env.unwrapped.nA))
+    env.unwrapped.P[14][2]  # 查看动力
+    random_policy = \
+        np.ones((env.unwrapped.nS, env.unwrapped.nA)) / env.unwrapped.nA
 
-episode_rewards = [play_policy(env, policy_vi) for _ in range(100)]
-print("价值迭代 平均奖励：{}".format(np.mean(episode_rewards)))
+    episode_rewards = [play_policy(env, random_policy) for _ in range(100)]
+    print("随机策略 平均奖励：{}".format(np.mean(episode_rewards)))
+
+    print('状态价值函数：')
+    v_random = evaluate_policy(env, random_policy)
+    print(v_random.reshape(4, 4))
+
+    print('动作价值函数：')
+    q_random = v2q(env, v_random)
+    print(q_random)
+
+    policy = random_policy.copy()
+    optimal = improve_policy(env, v_random, policy)
+    if optimal:
+        print('无更新，最优策略为：')
+    else:
+        print('有更新，更新后的策略为：')
+    print(policy)
+
+    policy_pi, v_pi = iterate_policy(env)
+    print('状态价值函数 =')
+    print(v_pi.reshape(4, 4))
+    print('最优策略 =')
+    print(np.argmax(policy_pi, axis=1).reshape(4, 4))
+
+    episode_rewards = [play_policy(env, policy_pi) for _ in range(100)]
+    print("策略迭代 平均奖励：{}".format(np.mean(episode_rewards)))
+
+    policy_vi, v_vi = iterate_value(env)
+    print('状态价值函数 =')
+    print(v_vi.reshape(4, 4))
+    print('最优策略 =')
+    print(np.argmax(policy_vi, axis=1).reshape(4, 4))
+
+    episode_rewards = [play_policy(env, policy_vi) for _ in range(100)]
+    print("价值迭代 平均奖励：{}".format(np.mean(episode_rewards)))
+
+
