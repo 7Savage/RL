@@ -20,7 +20,7 @@ class Chart:
         self.ax.plot(episode_rewards)
         self.ax.set_xlabel('iteration')
         self.ax.set_ylabel('episode reward')
-        self.fig.canvas.draw()
+        self.fig.show()
 
 
 class DQNReplayer:
@@ -59,35 +59,36 @@ class DQNAgent:
         self.target_net = self.build_network(input_size=observation_dim,
                                              output_size=self.action_n, **net_kwargs)  # 目标网络
 
-        self.target_net.set_weights(self.evaluate_net.get_weights())
+        self.target_net.set_weights(self.evaluate_net.get_weights())  # 目标网络设置与评估网络相同的权重
 
     def build_network(self, input_size, hidden_sizes, output_size,
                       activation=tf.nn.relu, output_activation=None,
                       learning_rate=0.01):  # 构建网络
-        model = keras.Sequential()
+        model = keras.Sequential()  # 选择模型
         for layer, hidden_size in enumerate(hidden_sizes):
-            kwargs = dict(input_shape=(input_size,)) if not layer else {}
+            kwargs = dict(input_shape=(input_size,)) if not layer else {}  # 输入层，kwargs为可变参数字典
             model.add(keras.layers.Dense(units=hidden_size,
-                                         activation=activation, **kwargs))
+                                         activation=activation, **kwargs))  # 添加隐藏层，Dense为全连接层，激活函数是relu
         model.add(keras.layers.Dense(units=output_size,
-                                     activation=output_activation))  # 输出层
-        optimizer = tf.optimizers.Adam(lr=learning_rate)
-        model.compile(loss='mse', optimizer=optimizer)
+                                     activation=output_activation))  # 添加输出层，无激活函数
+        optimizer = tf.optimizers.Adam(lr=learning_rate)  # 优化器为Adam
+        model.compile(loss='mse', optimizer=optimizer)  # 编译，损失函数为均方差
         return model
 
     def learn(self, observation, action, reward, next_observation, done):
         self.replayer.store(observation, action, reward, next_observation,
-                            done)  # 存储经验
+                            done)  # 存储经验 S A R S'
 
         observations, actions, rewards, next_observations, dones = \
-            self.replayer.sample(self.batch_size)  # 经验回放
+            self.replayer.sample(self.batch_size)  # 经验采样，Si Ai Ri Si'
 
-        next_qs = self.target_net.predict(next_observations)
-        next_max_qs = next_qs.max(axis=-1)
-        us = rewards + self.gamma * (1. - dones) * next_max_qs
-        targets = self.evaluate_net.predict(observations)
+        next_qs = self.target_net.predict(next_observations)  # 预测下一个动作价值函数
+        next_max_qs = next_qs.max(axis=-1)  # 选择最大的动作价值函数
+        us = rewards + self.gamma * (1. - dones) * next_max_qs  # 计算回报的估计值
+
+        targets = self.evaluate_net.predict(observations)  # 只更新评估网络的权重
         targets[np.arange(us.shape[0]), actions] = us
-        self.evaluate_net.fit(observations, targets, verbose=0)
+        self.evaluate_net.fit(observations, targets, verbose=2)  # 训练，更新动作价值函数，verbose：屏显模式 0：不输出  1：输出进度  2：输出每次的训练结果
 
         if done:  # 更新目标网络
             self.target_net.set_weights(self.evaluate_net.get_weights())
